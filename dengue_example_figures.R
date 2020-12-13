@@ -76,8 +76,8 @@ for(setting in c("cat","cont")) {
                 ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
                 mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Log10 Average Neutralizing Antibody Titer", ylab="Probability of VCD", main=toupper(trial))
                 mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band))*Bias, type="l", lty=c(1,2,2), col=3, lwd=lwd, make.legend=F, add=T)
-                title(main="Marginalized and Controlled Effect Risk of Virologically Confirmed Dengue by Antibody Titer", outer=T)
-                mylegend(x=3,legend=c("Marginalized risk", "Controlled effect risk (conservative)"), lty=1, col=c(4,3), lwd=2, cex=.8)
+                title(main="Marginalized and Controlled Risk of Virologically Confirmed Dengue by Antibody Titer", outer=T)
+                mylegend(x=3,legend=c("Marginalized risk", "Controlled risk (conservative)"), lty=1, col=c(4,3), lwd=2, cex=.8)
             }
         dev.off()    
     }
