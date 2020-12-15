@@ -12,7 +12,7 @@ numCores=30 # bootstrap replicates
 
 
 # save R object
-for(setting in c("cat")) {
+for(setting in c("cat","cont")) {
 # setting="cat"; trial="cyd14"
     
     res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
@@ -48,7 +48,7 @@ for(setting in c("cat")) {
             dat.design=twophase(id=list(~1,~1),strata=list(NULL,~d),subset=~indicators, data=dat)
             fit.risk = svycoxph(update(f.0, ~.+s), design=dat.design)
             # marker regression
-            fit.s=if(setting=="cat") nnet::multinom(update(f.0, s~.), dat, weights=wt, trace=FALSE) else svyglm(update(f.0, s~.), dat.design) 
+            fit.s=if(setting=="cat") nnet::multinom(update(f.0, s~.), dat[dat$fasi=="Y",], trace=FALSE) else lm(update(f.0, s~.), dat[dat$fasi=="Y",]) 
             # marginal risk estimation
             marginal.risk(fit.risk, fit.s, data=subset(dat, indicators==1), categorical.s=setting=="cat", weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss)    
         }
@@ -74,7 +74,7 @@ for(setting in c("cat")) {
             tmp[[1]]=sample(ptids.cases, replace=TRUE)        
             # 2. bootstrap the controls
             tmp[[2]]=sample(ptids.controls, replace=TRUE)        
-            # 3. add rest
+            # 3. add rest, only to get the counts right
             tmp[[3]]=ptids.rest
             idxes=do.call(c, tmp)
             dat.b=dat[match(idxes, dat$ptid),]
