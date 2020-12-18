@@ -4,7 +4,7 @@ library(survey) # svycoxph
 library(doParallel) # mclapply
 library(nnet)# multinom
 library(kyotil);       stopifnot(packageVersion("kyotil")>="2020.11.20")
-library(marginalRisk); stopifnot(packageVersion("marginalRisk")>="2020.12.2")
+library(marginalRisk); stopifnot(packageVersion("marginalRisk")>="2020.12.17")
 library(DengueTrialsYF)
 #
 B=1e3 # number of available cores
@@ -12,33 +12,36 @@ numCores=30 # bootstrap replicates
 
 
 # save R object
-for(setting in c("cat","cont")) {
-# setting="cat"; trial="cyd14"
-    
+for(setting in c("cont")) {    
     res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
-        myprint(trial)
+    
+# setting="cont"; trial="cyd15"
     
         dat=make.m13.dat(trial, stype=0)
         dat=subset(dat, trt==1)
         dat$wt=1/dat$sampling.p
         
+        # adjust for protocol-specified age categories, sex, and country
         if (trial=="cyd14") {
-            # adjust for protocol-specified age categories, sex, and country
             f.0=Surv(X,d) ~ old + little + gender + MYS + PHL + THA + VNM
-            # cut points from Moodie et al (2018)
-            q.a=c(-Inf,log10(58),log10(266),Inf)
+            #q.a=c(-Inf,log10(58),log10(266),Inf)# cut points from Moodie et al (2018)
         } else {
             f.0=Surv(X,d) ~ old + gender + COL + HND + MEX + PRI 
-            # cut points from Moodie et al (2018)
-            q.a=c(-Inf,log10(135),log10(631),Inf) 
+            #q.a=c(-Inf,log10(135),log10(631),Inf)# cut points from Moodie et al (2018)
         }
-                
-        dat[["titer.cat"]] = factor(cut2(dat$titer,cuts=q.a))
-        dat$s = if(setting=="cat") dat$titer.cat else dat$titer
-        ss=if (setting=="cont") quantile(dat$s[dat$fasi=="Y"], seq(.05,.95,by=0.01), na.rm=TRUE) else NULL
-        myprint(ss)
         
-        #table(dat[["titer.cat"]])
+        if (setting=="cat") {
+            q.a=c(-Inf,quantile(dat$titer[dat$fasi=="Y"], c(1/3,2/3), na.rm=T),Inf)                
+            dat$s = factor(cut2(dat$titer,cuts=q.a)) 
+            print(table(dat$s))
+            ss=NULL
+        } else {
+            dat$s = dat$titer
+            ss=quantile(dat$titer[dat$fasi=="Y"], seq(.05,.95,by=0.01), na.rm=TRUE) 
+            myprint(ss)        
+        }
+        
+        #hist(dat$titer[dat$fasi=="Y"], main=trial)
         #with(data, table(fasi, indicators==1, d, useNA="ifany"))
             
         t0=365; myprint(max(dat$X[dat$d==1]))#363 
@@ -91,6 +94,7 @@ for(setting in c("cat","cont")) {
             cbind(marker=ss, prob, boot)            
         }    
     })
+    rownames(res)[1]="est"
     print(res)
     save(res, file=paste0("res_", setting, ".Rdata"))
 }

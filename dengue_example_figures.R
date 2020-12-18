@@ -3,9 +3,12 @@ library(kyotil);       stopifnot(packageVersion("kyotil")>="2020.11.20")
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
 
 
-for(setting in c("cat","cont")) {
-# setting="cont"; trial="cyd14"
+for(setting in c("cont")) {
+# setting="cat"; trial="cyd15"
+    
     load(file=paste0("res_", setting, ".Rdata"))
+    
+    
     ###############################
     # compute sensitivity measures
     
@@ -51,6 +54,7 @@ for(setting in c("cat","cont")) {
         }            
         
         # Fig 2
+        ylim=c(0,0.055)
         mypdf(onefile=F, file=paste0("CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,0,1,0))
             for (trial in c("cyd14","cyd15")) {        
                 lwd=2
@@ -74,7 +78,7 @@ for(setting in c("cat","cont")) {
                 Bias=ifelse(res[,"marker",trial]>=s.ref, B.ref.s, 1/B.s.ref)
                 
                 ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
-                mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Log10 Average Neutralizing Antibody Titer", ylab="Probability of VCD", main=toupper(trial))
+                mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Log10 Average Neutralizing Antibody Titer", ylab="Probability of VCD", main=toupper(trial), ylim=ylim)
                 mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band))*Bias, type="l", lty=c(1,2,2), col=3, lwd=lwd, make.legend=F, add=T)
                 title(main="Marginalized and Controlled Risk of Virologically Confirmed Dengue by Antibody Titer", outer=T)
                 mylegend(x=3,legend=c("Marginalized risk", "Controlled risk (conservative)"), lty=1, col=c(4,3), lwd=2, cex=.8)
