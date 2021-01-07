@@ -1,10 +1,11 @@
 rm(list=ls())
 library(kyotil);       stopifnot(packageVersion("kyotil")>="2020.11.20")
+library(marginalRisk); stopifnot(packageVersion("marginalRisk")>="2021.1.7") # bias.factor, E.value, controlled.risk.bias.factor
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
 
 
 for(setting in c("cont")) {
-# setting="cat"; trial="cyd15"
+# setting="cont"; trial="cyd15"
     
     load(file=paste0("res_", setting, ".Rdata"))
     
@@ -13,8 +14,9 @@ for(setting in c("cont")) {
     # compute sensitivity measures
     
     RRud=RReu=4
-    bias.factor=RRud*RReu/(RRud+RReu-1); myprint(bias.factor)
-    E.value=function(rr) { rr1=1/rr; rr1 + sqrt(rr1 * (rr1-1)) }
+    bias.factor=bias.factor(RRud, RReu)
+    #bias.factor=RRud*RReu/(RRud+RReu-1)
+    #E.value=function(rr) { rr1=1/rr; rr1 + sqrt(rr1 * (rr1-1)) } # part of marginalRisk package
     
     if (setting=="cat") {
     
@@ -68,14 +70,15 @@ for(setting in c("cont")) {
                 which=which.min(abs(res[,"prob",trial]-mean(dat$d))); print(which)
                 s.ref=res[which,"marker",trial]
     
-                # compute RR(s.ref, s) according to the display after equation (5) in the manuscript
-                RR.ref.s <- exp( (res[,"marker",trial]-s.ref) / (res[s2,"marker",trial]-res[s1,"marker",trial]) * log(RRud) )
-                RR.s.ref <- exp( (s.ref-res[,"marker",trial]) / (res[s2,"marker",trial]-res[s1,"marker",trial]) * log(RRud) )
-                # compute B accoring to the display before equation (5) in the manuscript
-                B.s.ref=RR.s.ref*RR.s.ref/(RR.s.ref+RR.s.ref-1)
-                B.ref.s=RR.ref.s*RR.ref.s/(RR.ref.s+RR.ref.s-1)
-                # compute bias factor according to equation (5)
-                Bias=ifelse(res[,"marker",trial]>=s.ref, B.ref.s, 1/B.s.ref)
+                Bias=controlled.risk.bias.factor(ss=res[,"marker",trial], s.cent=s.ref, s1=res[s1,"marker",trial], s2=res[s2,"marker",trial], RRud) 
+#                # compute RR(s.ref, s) according to the display after equation (6) in the manuscript
+#                RR.ref.s <- exp( (res[,"marker",trial]-s.ref) / (res[s2,"marker",trial]-res[s1,"marker",trial]) * log(RRud) )
+#                RR.s.ref <- exp( (s.ref-res[,"marker",trial]) / (res[s2,"marker",trial]-res[s1,"marker",trial]) * log(RRud) )
+#                # compute B accoring to the display before equation (5) in the manuscript, assuming RRud and RReu are the same
+#                B.s.ref=RR.s.ref*RR.s.ref/(RR.s.ref+RR.s.ref-1)
+#                B.ref.s=RR.ref.s*RR.ref.s/(RR.ref.s+RR.ref.s-1)
+#                # compute bias factor according to equation (6)
+#                Bias=ifelse(res[,"marker",trial]>=s.ref, B.ref.s, 1/B.s.ref)
                 
                 ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
                 mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Log10 Average Neutralizing Antibody Titer", ylab="Probability of VCD", main=toupper(trial), ylim=ylim)
