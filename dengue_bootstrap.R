@@ -17,7 +17,7 @@ numCores=30 # bootstrap replicates
 for(setting in c("cont","cat")) {    
     res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
     
-# setting="cont"; trial="cyd15"
+# setting="cat"; trial="cyd15"
     
         dat=make.m13.dat(trial, stype=0)
         dat=subset(dat, trt==1)
@@ -96,8 +96,7 @@ for(setting in c("cont","cat")) {
             cbind(marker=ss, prob, boot)            
         }    
     })
-    rownames(res)[1]="est"
-    print(res)
+    if(setting=="cat") rownames(res)[1]="est"
     if (!dir.exists("input")) dir.create("input")
     save(res, file=paste0("input/res_", setting, ".Rdata"))
 }
