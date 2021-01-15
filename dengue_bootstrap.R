@@ -11,8 +11,10 @@ B=1e3 # number of available cores
 numCores=30 # bootstrap replicates
 
 
-# save R object
-for(setting in c("cont")) {    
+####################################################################################################
+# vaccine arm
+
+for(setting in c("cont","cat")) {    
     res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
     
 # setting="cont"; trial="cyd15"
@@ -96,5 +98,56 @@ for(setting in c("cont")) {
     })
     rownames(res)[1]="est"
     print(res)
-    save(res, file=paste0("res_", setting, ".Rdata"))
+    if (!dir.exists("input")) dir.create("input")
+    save(res, file=paste0("input/res_", setting, ".Rdata"))
 }
+
+
+
+####################################################################################################
+# placebo arm
+
+# only implement continuous markers and not categorical markers
+res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
+# trial="cyd15"
+    
+    dat=make.m13.dat(trial, stype=0)
+    dat=subset(dat, trt==0)
+    n=nrow(dat)
+    
+    # adjust for protocol-specified age categories, sex, and country
+    if (trial=="cyd14") {
+        f.0=Surv(X,d) ~ old + little + gender + MYS + PHL + THA + VNM
+        #q.a=c(-Inf,log10(58),log10(266),Inf)# cut points from Moodie et al (2018)
+    } else {
+        f.0=Surv(X,d) ~ old + gender + COL + HND + MEX + PRI 
+        #q.a=c(-Inf,log10(135),log10(631),Inf)# cut points from Moodie et al (2018)
+    }
+    
+    t0=365; myprint(max(dat$X[dat$d==1]))#363 
+    
+    get.marginal.risk=function(dat){
+        fit.risk = coxph(f.0, dat)
+        dat$X=t0
+        risks = 1 - exp(-predict(fit.risk, newdata=dat, type="expected"))
+        mean(risks)
+    }
+    
+    prob=get.marginal.risk(dat)
+    
+    # bootstrapping
+    # store the current rng state 
+    save.seed <- try(get(".Random.seed", .GlobalEnv), silent=TRUE) 
+    if (class(save.seed)=="try-error") {set.seed(1); save.seed <- get(".Random.seed", .GlobalEnv) }   
+    out=mclapply(1:B, mc.cores = numCores, FUN=function(seed) {   
+        set.seed(seed) 
+        dat.b=dat[sample.int(n, replace=T),]            
+        get.marginal.risk(dat.b)
+    })
+    boot=do.call(cbind, out)
+    # restore rng state 
+    assign(".Random.seed", save.seed, .GlobalEnv)    
+    
+    c(est=prob, boot)
+})
+save(res.placebo.cont, file=paste0("input/res_placebo_cont.Rdata"))
