@@ -66,7 +66,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         # use the alternative 
         dat=make.m13.dat(trial, stype=0)
         dat=subset(dat, trt==1)
-        which=which.min(abs(res[,"prob",trial]-mean(dat$d))); print(which)
+        which=which.min(abs(res[,"prob",trial]-mean(dat$d)))
         s.ref=res[which,"marker",trial]
 
         Bias=controlled.risk.bias.factor(ss=res[,"marker",trial], s.cent=s.ref, s1=res[s1,"marker",trial], s2=res[s2,"marker",trial], RRud) 
@@ -111,18 +111,18 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
         axis(side=2,at=seq(0,1,by=.25),labels=c('0','25','50','75','100')%.%"%")
-        title(main="VE and Controlled VE against Virologically Confirmed Dengue by Antibody Titer", outer=T)
+        title(main="Controlled Vaccine Efficacy against Virologically Confirmed Dengue by Antibody Titer", outer=T)
         # VE
         est = 1 - res[,"prob",trial]/res.placebo.cont["est",trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial] )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))
         mymatplot(res[,"marker",trial], t(rbind(est, ci.band)), type="l", lty=c(1,2,2), col="pink", lwd=lwd, make.legend=F, add=T)
-        mylegend(x=1,legend=c("Controlled VE","VE"), lty=1, col=c("red","pink"), lwd=2, cex=.8)
-    
+        mylegend(x=1,legend=c("Controlled VE Sens. Analysis","Controlled VE"), lty=1, col=c("red","pink"), lwd=2, cex=.8)
+            
+        # add histogram
+        par(new=TRUE) 
         col <- c(col2rgb("olivedrab3")) # orange, darkgoldenrod2
         col <- rgb(col[1], col[2], col[3], alpha=255*0.4, maxColorValue=255)
-    
-        par(new=TRUE) # this allows addition to the existing plot
         hist(dat$titer[dat$d==0],col=col,axes=F,labels=F,main="",xlab="",ylab="",breaks=10,border=0,freq=F,ylim=ylim)    
         axis(side=4, at=axTicks(side=4)[1:5])
         mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
