@@ -126,7 +126,7 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     t0=365; myprint(max(dat$X[dat$d==1]))#363 
     
     get.marginal.risk=function(dat){
-        fit.risk = coxph(f.0, dat)
+        fit.risk = coxph(f.0, dat, model=T) # model=T is required because the type of prediction requires it, see Note on ?predict.coxph
         dat$X=t0
         risks = 1 - exp(-predict(fit.risk, newdata=dat, type="expected"))
         mean(risks)

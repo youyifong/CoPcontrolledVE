@@ -84,7 +84,7 @@ dev.off()
         
 
 
-# Fig 3, controlled VE
+# Fig 3, controlled VE curves
 mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,0,1,0), width=12, height=5)
     lwd=2.5
     par(mar=c(4,5,3,4.2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
