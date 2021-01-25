@@ -37,8 +37,7 @@ load(file=paste0("input/res_", setting, ".Rdata"))
 s2="85%"; s1="15%" # these two reference quantiles are used in the next two blocks of code
 
         
-# generate text results
-# comparison of s1 and s1
+# generate text results comparing s1 and s1
 for (trial in c("cyd14","cyd15")) {
     val=c(res[s2,"prob",trial]/res[s1,"prob",trial], quantile(res[s2,3:dim(res)[2],trial]/res[s1,3:dim(res)[2],trial], c(.025,.975)))
     # write to file, % is appended to avoid extra space
@@ -84,12 +83,12 @@ dev.off()
         
 
 
-# Fig 3, controlled VE curves
+# Fig 3 controlled VE curves
 mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,0,1,0), width=12, height=5)
-    lwd=2.5
     par(mar=c(4,5,3,4.2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
     for (trial in c("cyd14","cyd15")) {        
     # trial="cyd14"
+        lwd=2.5
         
         # compute Bias as a vector, which is a function of s. equation (6) = Bias * marginalized risk
         # choose a reference marker value
@@ -116,6 +115,21 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         axis(side=1,at=log10(tmp),labels=tmp)
         axis(side=2,at=seq(0,1,by=.25),labels=c('0','25','50','75','100')%.%"%")
         title(main="Controlled Vaccine Efficacy against Virologically Confirmed Dengue by Antibody Titer", outer=T)
+        cve = cbind(10**res[,"marker",trial], t(rbind(est, ci.band))); cve
+        # after comparing both trials, we choose 36 and 1200 (2 significant digits) as two titers and choose percentile based on that
+        if (trial=="cyd15") {
+            titer.1="5%"
+            titer.2="79%"
+        } else {
+            titer.1="8%"
+            titer.2="90%"
+        }
+        tmp=formatDouble(cve[titer.1, -1]*100, 1)
+        write(paste0(tmp[1], "\\% (95\\% CI ", tmp[2], "--", tmp[3], ")"), file="input/fig3_low_"%.%trial)    
+        tmp=formatDouble(cve[titer.2, -1]*100, 1)
+        write(paste0(tmp[1], "\\% (95\\% CI ", tmp[2], "--", tmp[3], ")"), file="input/fig3_high_"%.%trial)    
+        
+        
         # VE
         est = 1 - res[,"prob",trial]/res.placebo.cont["est",trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial] )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
