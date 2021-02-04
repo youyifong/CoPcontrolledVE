@@ -1,6 +1,6 @@
 rm(list=ls())
-library(kyotil);       stopifnot(packageVersion("kyotil")>="2020.11.20")
-library(marginalRisk); stopifnot(packageVersion("marginalRisk")>="2021.1.7") # bias.factor, E.value, controlled.risk.bias.factor
+library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
+library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4") # bias.factor, E.value, controlled.risk.bias.factor
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
 load(file=paste0("input/res_placebo_cont.Rdata")) # placebo arm results res.placebo.cont
 RRud=RReu=4

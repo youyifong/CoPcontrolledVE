@@ -3,12 +3,14 @@ library(Hmisc) # cut2
 library(survey) # svycoxph
 library(doParallel) # mclapply
 library(nnet)# multinom
-library(kyotil);       stopifnot(packageVersion("kyotil")>="2020.11.20")
-library(marginalRisk); stopifnot(packageVersion("marginalRisk")>="2020.12.17")
+library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
+library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4")
 library(DengueTrialsYF)
 #
 B=1e3 # number of available cores
 numCores=30 # bootstrap replicates
+
+time.start=Sys.time()
 
 
 ####################################################################################################
@@ -48,17 +50,17 @@ for(setting in c("cont","cat")) {
             
         t0=365; myprint(max(dat$X[dat$d==1]))#363 
         
-        get.marginal.risk=function(dat){
+        get.marginalized.risk=function(dat){
             # risk regression
             dat.design=twophase(id=list(~1,~1),strata=list(NULL,~d),subset=~indicators, data=dat)
             fit.risk = svycoxph(update(f.0, ~.+s), design=dat.design)
-            # marker regression
-            fit.s=if(setting=="cat") nnet::multinom(update(f.0, s~.), dat[dat$fasi=="Y",], trace=FALSE) else lm(update(f.0, s~.), dat[dat$fasi=="Y",]) 
+#            # marker regression
+#            fit.s=if(setting=="cat") nnet::multinom(update(f.0, s~.), dat[dat$fasi=="Y",], trace=FALSE) else lm(update(f.0, s~.), dat[dat$fasi=="Y",]) 
             # marginal risk estimation
-            marginal.risk(fit.risk, fit.s, data=subset(dat, indicators==1), categorical.s=setting=="cat", weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss)    
+            marginalized.risk(fit.risk, "s", data=subset(dat, indicators==1), categorical.s=setting=="cat", weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss)    
         }
         
-        prob=get.marginal.risk(dat)
+        prob=get.marginalized.risk(dat)
         
         # preparing for bootstrap
         # ptids to bootstrap
@@ -84,7 +86,7 @@ for(setting in c("cont","cat")) {
             idxes=do.call(c, tmp)
             dat.b=dat[match(idxes, dat$ptid),]
             
-            get.marginal.risk(dat.b)
+            get.marginalized.risk(dat.b)
         })
         boot=do.call(cbind, out)
         # restore rng state 
@@ -125,14 +127,14 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     
     t0=365; myprint(max(dat$X[dat$d==1]))#363 
     
-    get.marginal.risk=function(dat){
+    get.marginalized.risk=function(dat){
         fit.risk = coxph(f.0, dat, model=T) # model=T is required because the type of prediction requires it, see Note on ?predict.coxph
         dat$X=t0
         risks = 1 - exp(-predict(fit.risk, newdata=dat, type="expected"))
         mean(risks)
     }
     
-    prob=get.marginal.risk(dat)
+    prob=get.marginalized.risk(dat)
     
     # bootstrapping
     # store the current rng state 
@@ -141,7 +143,7 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     out=mclapply(1:B, mc.cores = numCores, FUN=function(seed) {   
         set.seed(seed) 
         dat.b=dat[sample.int(n, replace=T),]            
-        get.marginal.risk(dat.b)
+        get.marginalized.risk(dat.b)
     })
     boot=do.call(cbind, out)
     # restore rng state 
@@ -150,3 +152,5 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     c(est=prob, boot)
 })
 save(res.placebo.cont, file=paste0("input/res_placebo_cont.Rdata"))
+
+print(Sys.time()-time.start)
