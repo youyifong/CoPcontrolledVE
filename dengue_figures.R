@@ -55,8 +55,10 @@ for (trial in c("cyd14","cyd15")) {
 
 # Fig 2
 ylim=c(0,0.055)
-mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,0,1,0))
+mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,0,1,0), width=11, height=5)
+    par(mar=c(4,5,3,2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
     for (trial in c("cyd14","cyd15")) {        
+    #trial="cyd14"
         lwd=2
         
         # choose a reference marker value
@@ -67,25 +69,36 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         dat=subset(dat, trt==1)
         which=which.min(abs(res[,"prob",trial]-mean(dat$d)))
         s.ref=res[which,"marker",trial]
-    
+            
         Bias=controlled.risk.bias.factor(ss=res[,"marker",trial], s.cent=s.ref, s1=res[s1,"marker",trial], s2=res[s2,"marker",trial], RRud) 
         
         xlim=log10(c(20,3000))
+        
         ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
-        mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Log10 Average Neutralizing Antibody Titer", ylab="Probability of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
+        mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Average nAb Titer of Vaccinees", ylab="Probability of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
         mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band))*Bias, type="l", lty=c(1,2,2), col=3, lwd=lwd, make.legend=F, add=T)
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
         title(main="Marginalized and Controlled Risk of Virologically Confirmed Dengue by Antibody Titer", outer=T)
         mylegend(x=3,legend=c("Marginalized risk", "Controlled risk (conservative)"), lty=1, col=c(4,3), lwd=2, cex=.8)
+    
+        # add histogram
+        par(new=TRUE) 
+        col <- c(col2rgb("olivedrab3")) # orange, darkgoldenrod2
+        col <- rgb(col[1], col[2], col[3], alpha=255*0.4, maxColorValue=255)
+        tmp=hist(dat$titer[dat$d==0],plot=F)    
+        hist(dat$titer[dat$d==0],col=col,axes=F,labels=F,main="",xlab="",ylab="",breaks=10,border=0,freq=F,ylim=c(0,1.25*max(tmp$density)))    
+        #axis(side=4, at=axTicks(side=4)[1:5])
+        #mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
+        mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
     }
 dev.off()    
         
 
 
 # Fig 3 controlled VE curves
-mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,0,1,0), width=12, height=5)
-    par(mar=c(4,5,3,4.2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
+mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,0,1,0), width=11, height=5)
+    par(mar=c(4,5,3,2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
     for (trial in c("cyd14","cyd15")) {        
     # trial="cyd14"
         lwd=2.5
@@ -142,8 +155,8 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         col <- c(col2rgb("olivedrab3")) # orange, darkgoldenrod2
         col <- rgb(col[1], col[2], col[3], alpha=255*0.4, maxColorValue=255)
         hist(dat$titer[dat$d==0],col=col,axes=F,labels=F,main="",xlab="",ylab="",breaks=10,border=0,freq=F,ylim=ylim)    
-        axis(side=4, at=axTicks(side=4)[1:5])
-        mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
+        #axis(side=4, at=axTicks(side=4)[1:5]) # note that this is not correct if ylim is set
+        #mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
         mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
     
     }
