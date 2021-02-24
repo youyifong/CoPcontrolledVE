@@ -86,11 +86,11 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         par(new=TRUE) 
         col <- c(col2rgb("olivedrab3")) # orange, darkgoldenrod2
         col <- rgb(col[1], col[2], col[3], alpha=255*0.4, maxColorValue=255)
-        tmp=hist(dat$titer[dat$d==0],plot=F)    
-        hist(dat$titer[dat$d==0],col=col,axes=F,labels=F,main="",xlab="",ylab="",breaks=10,border=0,freq=F,ylim=c(0,1.25*max(tmp$density)))    
+        tmp=hist(dat$titer[dat$d==0],plot=F,breaks=15)    
+        plot(tmp,col=col,axes=F,labels=F,main="",xlab="",ylab="",border=0,freq=F,ylim=c(0,1.25*max(tmp$density)), xlim=xlim)    
         #axis(side=4, at=axTicks(side=4)[1:5])
         #mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
-        mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
+        #mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
     }
 dev.off()    
         
@@ -154,10 +154,11 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         par(new=TRUE) 
         col <- c(col2rgb("olivedrab3")) # orange, darkgoldenrod2
         col <- rgb(col[1], col[2], col[3], alpha=255*0.4, maxColorValue=255)
-        hist(dat$titer[dat$d==0],col=col,axes=F,labels=F,main="",xlab="",ylab="",breaks=10,border=0,freq=F,ylim=ylim)    
+        tmp=hist(dat$titer[dat$d==0],breaks=15,plot=F)    
+        plot(tmp,col=col,axes=F,labels=F,main="",xlab="",ylab="",border=0,freq=F,ylim=ylim,xlim=xlim)    
         #axis(side=4, at=axTicks(side=4)[1:5]) # note that this is not correct if ylim is set
         #mtext("Density", side=4, las=0, line=2, cex=1, at=.3)  
-        mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
+        #mylegend(x=6, fill=col, border=col, legend="Vaccine Group", bty="n", cex=0.7)  
     
     }
 dev.off()    
