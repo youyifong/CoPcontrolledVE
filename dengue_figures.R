@@ -1,4 +1,3 @@
-rm(list=ls())
 library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4") # bias.factor, E.value, controlled.risk.bias.factor
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
@@ -6,6 +5,43 @@ load(file=paste0("input/res_placebo_cont.Rdata")) # placebo arm results res.plac
 RRud=RReu=4
 bias.factor=bias.factor(RRud, RReu)
     
+
+
+
+####################################################################################################
+# for CYD14 and CYD15 separately, we should show such a table (or figure), 
+# considering the baseline covariates that are adjusted for (age, sex, country). 
+
+fits=lapply (c("cyd14","cyd15"), function(trial) {
+    dat=make.m13.dat(trial, stype=0)
+    dat=subset(dat, trt==1)
+    dat$wt=1/dat$sampling.p
+    
+    # adjust for protocol-specified age categories, sex, and country
+    if (trial=="cyd14") {
+        f.0=Surv(X,d) ~ old + little + gender + MYS + PHL + THA + VNM + titer
+    } else {
+        f.0=Surv(X,d) ~ old + gender + COL + HND + MEX + PRI + titer
+    }
+    
+    dat.design=twophase(id=list(~1,~1),strata=list(NULL,~d),subset=~indicators, data=dat)
+    fit.risk = svycoxph(f.0, design=dat.design)    
+})
+
+tab=getFormattedSummary(fits, robust=T, type=3)
+tab=tab[-which(rownames(tab)=="titer"),]
+
+tab=cbind(rownames(tab[c(2,1,3,4:7),]), tab[c(2,1,3,4:7),1], rbind(NA, cbind(rownames(tab[c(1,3,8:11),]), tab[c(1,3,8:11),2])))
+tab[,1]=sub("TRUE","",tab[,1])
+tab[,3]=sub("TRUE","",tab[,3])
+tab[,1]=sub("old","12-14 yr",tab[,1])
+tab[,1]=sub("little","2-5 yr",tab[,1])
+tab[,3]=sub("old","12-16 yr",tab[,3])
+colnames(tab)=c("","HR", "","HR")
+
+mytex(tab, file="confounders", include.rownames=F,  include.colnames=F,  save2input.only=T, col.headers="\\hline\n   \\multicolumn{2}{c}{CYD14}    & \\multicolumn{2}{c}{CYD15} \\\\ \n\\hline\n", align=c("l","c", "l","c"))
+
+
 
 ####################################################################################################
 # categorical markers
