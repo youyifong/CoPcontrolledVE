@@ -2,7 +2,7 @@ library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(survey)
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4") # bias.factor, E.value, controlled.risk.bias.factor
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
-load(file=paste0("input/res_placebo_cont.Rdata")) # placebo arm results res.placebo.cont
+load(file=paste0("input/res_placebo_cont_tmlestsl.Rdata")) # placebo arm results res.placebo.cont
 RRud=RReu=4
 bias.factor=bias.factor(RRud, RReu)
     
@@ -186,7 +186,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         ylim=c(0, max(hist(dat$titer[dat$d==0],breaks=10,plot=FALSE)$density, 1))
         xlim=log10(c(20,3000))
     
-        # CVE
+        # CVE with sensitivity study
         est = 1 - res[,"prob",trial]*Bias/res.placebo.cont["est",trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial]*Bias )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))
@@ -211,7 +211,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         write(paste0(tmp[1], "\\% (95\\% CI ", tmp[2], "--", tmp[3], ")"), file="input/fig3_high_"%.%trial)    
         
         
-        # VE
+        # CVE without sensitivity study
         est = 1 - res[,"prob",trial]/res.placebo.cont["est",trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial] )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))

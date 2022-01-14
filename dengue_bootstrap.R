@@ -9,7 +9,6 @@ library(DengueTrialsYF)
 #
 B=1e3 # number of available cores
 numCores=30 # bootstrap replicates
-
 time.start=Sys.time()
 
 
