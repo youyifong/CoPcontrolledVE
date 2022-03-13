@@ -7,10 +7,16 @@ library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4")
 library(DengueTrialsYF)
 #
-B=1e3 # number of available cores
-numCores=30 # bootstrap replicates
+B=1e3 # bootstrap replicates
+numCores=30 # number of available cores
 time.start=Sys.time()
 
+# this is key otherwise it would hang
+library(RhpcBLASctl)
+blas_get_num_procs()
+blas_set_num_threads(1L)
+stopifnot(blas_get_num_procs() == 1L)
+omp_set_num_threads(1L)
 
 ####################################################################################################
 # vaccine arm
@@ -18,7 +24,7 @@ time.start=Sys.time()
 for(setting in c("cont","cat")) {    
     res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
     
-# setting="cat"; trial="cyd15"
+# setting="cont"; trial="cyd15"
     
         dat=make.m13.dat(trial, stype=0)
         dat=subset(dat, trt==1)
@@ -55,8 +61,8 @@ for(setting in c("cont","cat")) {
             fit.risk = svycoxph(update(f.0, ~.+s), design=dat.design)
 #            # marker regression
 #            fit.s=if(setting=="cat") nnet::multinom(update(f.0, s~.), dat[dat$fasi=="Y",], trace=FALSE) else lm(update(f.0, s~.), dat[dat$fasi=="Y",]) 
-            # marginal risk estimation
-            marginalized.risk(fit.risk, "s", data=subset(dat, indicators==1), categorical.s=setting=="cat", weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss)    
+            #marginalized.risk(fit.risk, "s", data=subset(dat, indicators==1), categorical.s=setting=="cat", weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss) # use ph2 data
+            marginalized.risk(fit.risk, "s", data=dat, categorical.s=setting=="cat", t=t0, ss=ss) # use ph1 data
         }
         
         prob=get.marginalized.risk(dat)
@@ -74,6 +80,7 @@ for(setting in c("cont","cat")) {
         #   
         out=mclapply(1:B, mc.cores = numCores, FUN=function(seed) {   
             set.seed(seed) 
+            print(seed)
             ## three-step bootstrap process
             tmp=list()
             # 1. bootstrap the cases 
@@ -113,6 +120,7 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     
     dat=make.m13.dat(trial, stype=0)
     dat=subset(dat, trt==0)
+    dat$wt=1/dat$sampling.p
     n=nrow(dat)
     
     # adjust for protocol-specified age categories, sex, and country
@@ -124,13 +132,29 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
         #q.a=c(-Inf,log10(135),log10(631),Inf)# cut points from Moodie et al (2018)
     }
     
+    dat$s = dat$titer
+    #ss=quantile(dat$titer[dat$fasi=="Y"], seq(.05,.95,by=0.01), na.rm=TRUE) 
+    ss = wtd.quantile(dat$titer[dat$fasi=="Y"], dat$wt[dat$fasi=="Y"], .5)
+    myprint(ss)        
+    #ss = 1.61 # cyd14
+    #ss = 2.2  # cyd15
+    
     t0=365; myprint(max(dat$X[dat$d==1]))#363 
     
     get.marginalized.risk=function(dat){
-        fit.risk = coxph(f.0, dat, model=T) # model=T is required because the type of prediction requires it, see Note on ?predict.coxph
-        dat$X=t0
-        risks = 1 - exp(-predict(fit.risk, newdata=dat, type="expected"))
-        mean(risks)
+#        # no markers
+#        fit.risk = coxph(f.0, dat, model=T) # model=T is required because the type of prediction requires it, see Note on ?predict.coxph
+#        dat$X=t0
+#        risks = 1 - exp(-predict(fit.risk, newdata=dat, type="expected"))
+#        mean(risks)
+
+        # with markers
+        dat.design=twophase(id=list(~1,~1),strata=list(NULL,~d),subset=~indicators, data=dat)
+        fit.risk = svycoxph(update(f.0, ~.+s), design=dat.design)
+        #marginalized.risk(fit.risk, "s", data=subset(dat, indicators==1), categorical.s=F, weights=subset(dat, indicators==1, wt, drop=T), t=t0, ss=ss)  # use ph2 data
+        marginalized.risk(fit.risk, "s", data=dat, categorical.s=F, t=t0, ss=ss)  # use ph1 data
+
+
     }
     
     prob=get.marginalized.risk(dat)
@@ -150,6 +174,6 @@ res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
     
     c(est=prob, boot)
 })
-save(res.placebo.cont, file=paste0("input/res_placebo_cont.Rdata"))
+save(res.placebo.cont, file=paste0("input/res_placebo_cont_coxph.Rdata"))
 
 print(Sys.time()-time.start)

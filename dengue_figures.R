@@ -2,7 +2,8 @@ library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(survey)
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4") # bias.factor, E.value, controlled.risk.bias.factor
 library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
-load(file=paste0("input/res_placebo_cont_tmlestsl.Rdata")) # placebo arm results res.placebo.cont
+load(file=paste0("input/res_placebo_cont_coxph.Rdata")) 
+#load(file=paste0("input/res_placebo_cont_tmlestsl.Rdata")) 
 RRud=RReu=4
 bias.factor=bias.factor(RRud, RReu)
     
@@ -121,7 +122,7 @@ for (trial in c("cyd14","cyd15")) {
 }            
 
 
-# Fig 2
+# Fig 3 risk curves
 ylim=c(0,0.055)
 mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,0,1,0), width=11, height=5)
     par(mar=c(4,5,3,2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
@@ -143,7 +144,8 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         xlim=log10(c(20,3000))
         
         ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
-        mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, xlab="Month 13 Average nAb Titer of Vaccinees", ylab="Probability of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
+        mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, 
+            xlab="s_1: Assigned Value of the Biomarker S with Assignment to Vaccine", ylab="Controlled Risk r_C(s_1) of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
         mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band))*Bias, type="l", lty=c(1,2,2), col=3, lwd=lwd, make.legend=F, add=T)
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
@@ -164,7 +166,7 @@ dev.off()
         
 
 
-# Fig 3 controlled VE curves
+# Fig 4 controlled VE curves
 mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,0,1,0), width=11, height=5)
     par(mar=c(4,5,3,2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
     for (trial in c("cyd14","cyd15")) {        
@@ -184,13 +186,17 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         Bias=controlled.risk.bias.factor(ss=res[,"marker",trial], s.cent=s.ref, s1=res[s1,"marker",trial], s2=res[s2,"marker",trial], RRud) 
     
         ylim=c(0, max(hist(dat$titer[dat$d==0],breaks=10,plot=FALSE)$density, 1))
-        xlim=log10(c(20,3000))
+        xlim=c(ifelse(trial=="cyd14",1.61,2.2)-.1, log10(4000))
+        #xlim=log10(c(20,3000))
+        
+        to.show=res[,"marker",trial]>=ifelse(trial=="cyd14",1.61,2.2)
     
         # CVE with sensitivity study
-        est = 1 - res[,"prob",trial]*Bias/res.placebo.cont["est",trial]
+        est = 1 - res[,"prob",trial]*Bias/res.placebo.cont[1,trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial]*Bias )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))
-        mymatplot(res[,"marker",trial], t(rbind(est, ci.band)), type="l", lty=c(1,2,2), col="red", lwd=lwd, make.legend=F, xlab="Month 13 Average nAb Titer of Vaccinees", ylab="Vaccine Efficacy", 
+        mymatplot(res[,"marker",trial][to.show], t(rbind(est, ci.band))[to.show,], type="l", lty=c(1,2,2), col="red", lwd=lwd, make.legend=F, 
+            xlab="s_1: Assigned Value of the Biomarker S with Assignment to Vaccine", ylab="Controlled Vaccine Efficacy CVE(s_1,s_0)", 
             main=toupper(trial), ylim=ylim, xlim=xlim, yaxt="n", xaxt="n", draw.x.axis=F)
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
@@ -212,10 +218,10 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         
         
         # CVE without sensitivity study
-        est = 1 - res[,"prob",trial]/res.placebo.cont["est",trial]
+        est = 1 - res[,"prob",trial]/res.placebo.cont[1,trial]
         boot = 1 - t(  t( res[,3:ncol(res),trial] )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))
-        mymatplot(res[,"marker",trial], t(rbind(est, ci.band)), type="l", lty=c(1,2,2), col="pink", lwd=lwd, make.legend=F, add=T)
+        mymatplot(res[,"marker",trial][to.show], t(rbind(est, ci.band))[to.show,], type="l", lty=c(1,2,2), col="pink", lwd=lwd, make.legend=F, add=T)
         mylegend(x=1,legend=c("Controlled VE Sens. Analysis","Controlled VE"), lty=1, col=c("red","pink"), lwd=2, cex=.8)
             
         # add histogram

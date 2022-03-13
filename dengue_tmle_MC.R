@@ -28,7 +28,7 @@ sapply(seeds, simplify="array", function (seed) {
     set.seed(seed) 
     
     out=sapply(trials, function(trial) {
-    #trial="cyd14"
+    #trial="cyd15"
         myprint(trial)
         dat=make.m13.dat(trial, stype=0)
         if (seed>0) {
