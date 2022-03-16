@@ -123,7 +123,7 @@ for (trial in c("cyd14","cyd15")) {
 
 
 # Fig 3 risk curves
-ylim=c(0,0.055)
+ylim=c(0,0.065)
 mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,0,1,0), width=11, height=5)
     par(mar=c(4,5,3,2), las=1, cex.axis=0.9, cex.lab=1)# axis label orientation
     for (trial in c("cyd14","cyd15")) {        
@@ -145,7 +145,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         
         ci.band=apply(res[,,trial], 1, function (x) quantile(x[3:length(x)], c(.025,.975)))
         mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band)),      type="l", lty=c(1,2,2), col=4, lwd=lwd, make.legend=F, 
-            xlab="s_1: Assigned Value of the Biomarker S with Assignment to Vaccine", ylab="Controlled Risk r_C(s_1) of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
+            xlab="s = Assigned Value of S with Assignment to Vaccine", ylab="Marginalized and Controlled Risk of VCD", main=toupper(trial), ylim=ylim, xaxt="n", draw.x.axis=F, xlim=xlim)
         mymatplot(res[,"marker",trial], t(rbind(res[,"prob",trial], ci.band))*Bias, type="l", lty=c(1,2,2), col=3, lwd=lwd, make.legend=F, add=T)
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
@@ -196,7 +196,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         boot = 1 - t(  t( res[,3:ncol(res),trial]*Bias )/res.placebo.cont[2:nrow(res.placebo.cont),trial])                         
         ci.band=apply(boot, 1, function (x) quantile(x, c(.025,.975)))
         mymatplot(res[,"marker",trial][to.show], t(rbind(est, ci.band))[to.show,], type="l", lty=c(1,2,2), col="red", lwd=lwd, make.legend=F, 
-            xlab="s_1: Assigned Value of the Biomarker S with Assignment to Vaccine", ylab="Controlled Vaccine Efficacy CVE(s_1,s_0)", 
+            xlab="s = Assigned Value of S with Assignment to Vaccine", ylab="Controlled Vaccine Efficacy CVE(s_1,s_0)", 
             main=toupper(trial), ylim=ylim, xlim=xlim, yaxt="n", xaxt="n", draw.x.axis=F)
         tmp=c(30,100,300,1000,3000)
         axis(side=1,at=log10(tmp),labels=tmp)
@@ -211,7 +211,7 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
             titer.1="8%"
             titer.2="90%"
         }
-        tmp=formatDouble(cve[titer.1, -1]*100, 1)
+        tmp=formatDouble(cve[to.show, -1][1,]*100, 1)
         write(paste0(tmp[1], "\\% (95\\% CI ", tmp[2], "--", tmp[3], ")"), file="input/fig3_low_"%.%trial)    
         tmp=formatDouble(cve[titer.2, -1]*100, 1)
         write(paste0(tmp[1], "\\% (95\\% CI ", tmp[2], "--", tmp[3], ")"), file="input/fig3_high_"%.%trial)    
