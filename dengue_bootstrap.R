@@ -5,28 +5,33 @@ library(doParallel) # mclapply
 library(nnet)# multinom
 library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4")
-library(DengueTrialsYF)
-#
+
 B=1e3 # bootstrap replicates
 numCores=30 # number of available cores
 time.start=Sys.time()
 
-# this is key otherwise it would hang
+# to prevent BLAS parallelization from clashing with higher level parallelization
 library(RhpcBLASctl)
 blas_get_num_procs()
 blas_set_num_threads(1L)
 stopifnot(blas_get_num_procs() == 1L)
 omp_set_num_threads(1L)
 
+
+
+
 ####################################################################################################
 # vaccine arm
 
 for(setting in c("cont","cat")) {    
-    res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
-    
+    res=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {
 # setting="cont"; trial="cyd15"
     
-        dat=make.m13.dat(trial, stype=0)
+        #library(DengueTrialsYF)
+        #dat=make.m13.dat(trial, stype=0)
+        # mock data
+        dat=read.csv(trial%.%"_mock.csv")
+        
         dat=subset(dat, trt==1)
         dat$wt=1/dat$sampling.p
         
@@ -118,7 +123,11 @@ for(setting in c("cont","cat")) {
 res.placebo.cont=sapply(c("cyd14","cyd15"), simplify="array", function (trial) {    
 # trial="cyd15"
     
-    dat=make.m13.dat(trial, stype=0)
+    #library(DengueTrialsYF)
+    #dat=make.m13.dat(trial, stype=0)
+    # mock data
+    dat=read.csv(trial%.%"_mock.csv")
+    
     dat=subset(dat, trt==0)
     dat$wt=1/dat$sampling.p
     n=nrow(dat)

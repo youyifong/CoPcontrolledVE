@@ -1,7 +1,6 @@
 library(kyotil);           stopifnot(packageVersion("kyotil")>="2021.2-2")
 library(survey)
 library(marginalizedRisk); stopifnot(packageVersion("marginalizedRisk")>="2021.2-4") # bias.factor, E.value, controlled.risk.bias.factor
-library(DengueTrialsYF) # need data to estimate overall attack rate to get s.ref
 load(file=paste0("input/res_placebo_cont_coxph.Rdata")) 
 #load(file=paste0("input/res_placebo_cont_tmlestsl.Rdata")) 
 RRud=RReu=4
@@ -14,7 +13,11 @@ bias.factor=bias.factor(RRud, RReu)
 # considering the baseline covariates that are adjusted for (age, sex, country). 
 
 fits=lapply (c("cyd14","cyd15"), function(trial) {
-    dat=make.m13.dat(trial, stype=0)
+    #library(DengueTrialsYF) # needed to estimate overall attack rate to get s.ref
+    #dat=make.m13.dat(trial, stype=0)
+    # mock data
+    dat=read.csv(trial%.%"_mock.csv")
+
     dat=subset(dat, trt==1)
     dat$wt=1/dat$sampling.p
     
@@ -46,7 +49,11 @@ mytex(tab, file="confounders", include.rownames=F,  include.colnames=F,  save2in
 # regression titers on cov
 
 fits=lapply (c("cyd14","cyd15"), function(trial) {
-    dat=make.m13.dat(trial, stype=0)
+    #library(DengueTrialsYF)# needed to estimate overall attack rate to get s.ref
+    #dat=make.m13.dat(trial, stype=0)
+    # mock data
+    dat=read.csv(trial%.%"_mock.csv")
+
     dat=subset(dat, trt==1)
     dat$wt=1/dat$sampling.p
     
@@ -134,7 +141,12 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig2"), mfrow=c(1,2), oma=c(0,
         # use median 
         #s.ref=res["50%","marker",trial]
         # use the alternative 
-        dat=make.m13.dat(trial, stype=0)
+        # for real data analysis
+        #library(DengueTrialsYF)
+        #dat=make.m13.dat(trial, stype=0)
+        
+        dat=read.csv(trial%.%"_mock.csv")
+
         dat=subset(dat, trt==1)
         which=which.min(abs(res[,"prob",trial]-mean(dat$d)))
         s.ref=res[which,"marker",trial]
@@ -178,7 +190,12 @@ mypdf(onefile=F, file=paste0("input/CoPveryhighVE_Fig3"), mfrow=c(1,2), oma=c(0,
         # use median 
         #s.ref=res["50%","marker",trial]
         # use the alternative 
-        dat=make.m13.dat(trial, stype=0)
+        # for real data analysis
+        #library(DengueTrialsYF)
+        #dat=make.m13.dat(trial, stype=0)
+        
+        dat=read.csv(trial%.%"_mock.csv")
+    
         dat=subset(dat, trt==1)
         mean(dat$d)
         which=which.min(abs(res[,"prob",trial]-mean(dat$d)))
